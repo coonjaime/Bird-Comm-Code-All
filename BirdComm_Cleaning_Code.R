@@ -356,13 +356,16 @@ Max_SEWR=Max_Abund_Clean("SEWR",4)%>%
 Max_NOHA=Max_Abund_Clean("NOHA",4)%>%
   rename("Max_NOHA"="group_size")
 
-Max_GRPC=Max_Abund_Clean("GRPC",4)%>%
+Max_GRPC=Max_Abund_Clean("GRPC",500)%>%
   rename("Max_GRPC"="group_size")
 
 Max_VESP=Max_Abund_Clean("VESP",4)%>%
   rename("Max_VESP"="group_size")
 
-Max_LASP=Max_Abund_Clean("LASP",4)%>%
+Max_UPSA=Max_Abund_Clean("UPSA",4)%>%
+  rename("Max_UPSA"="group_size")
+
+Max_LASP=Max_Abund_Clean("UPSA",4)%>%
   rename("Max_LASP"="group_size")
 
 Fac_List=c("BHCO","RWBL","COYE","FISP","BARS","EAKI","MODO","NOBO","LOSH","EABL","KILL","HOLA","TUVU","AMKE")%>%
@@ -592,6 +595,7 @@ Max_Abund_Final=Patch_Visit_Info%>%
   left_join(Max_GRPC,          by="past_pat_year")%>%
   left_join(Max_VESP,          by="past_pat_year")%>%
   left_join(Max_LASP,          by="past_pat_year")%>%
+  left_join(Max_UPSA,          by="past_pat_year")%>%
   
   left_join(Max_BHCO,          by="past_pat_year")%>%
   left_join(Max_RWBL,          by="past_pat_year")%>%
@@ -637,11 +641,11 @@ write.csv(NMix_BHCO, "NMix_BHCO.csv")
 Max_Abund_Clean_Pasture <- function(x,y) { 
   All_Birds_By_Visit_Filtered%>%
     left_join(Trans_Visit,by="bird_trans_id")%>% #first link to get the information on each transect
-    select(-observer,-start_time,-clouds,wind, -precipitation,-cattle_interference,-julian_date,-year,-patch_id,-pasture_id,-visit,-area_surveyed,-transect_length)%>% #remove unnecessary information
+    select(-observer,-start_time,-clouds,wind, -precipitation,-cattle_interference,-julian_date,-year,-patch_id,-pasture_id,-visit)%>% #remove unnecessary information
     right_join(Patch_Visit_Info,by="past_pat_year_visit")%>%
     filter(species==x)%>%
     filter(group_size<y)%>%
-    group_by(past_pat_year_visit,pasture_id,year,area_surveyed,transect_length)%>%
+    group_by(pasture_id,year,visit)%>%
     summarise_at(vars(group_size),sum)%>%
     ungroup()%>%
     group_by(pasture_id,year)%>%
@@ -650,7 +654,7 @@ Max_Abund_Clean_Pasture <- function(x,y) {
     ungroup()%>%
     select(-pasture_id,-year)}
 
-Obl_List=c("BOBO","DICK","EAME","GRSP","HESP","SEWR","NOHA","GRPC","VESP","LASP")%>%
+Obl_List=c("BOBO","DICK","EAME","GRSP","HESP","SEWR","NOHA","GRPC","VESP","LASP","UPSA")%>%
   as_tibble()%>%
   rename(Species=value)%>%
   mutate(Obl_Fac="Obligate")
@@ -677,7 +681,7 @@ Max_SEWR_Pasture=Max_Abund_Clean_Pasture("SEWR",4)%>%
 Max_NOHA_Pasture=Max_Abund_Clean_Pasture("NOHA",4)%>%
   rename("Max_NOHA"="group_size")
 
-Max_GRPC_Pasture=Max_Abund_Clean_Pasture("GRPC",4)%>%
+Max_GRPC_Pasture=Max_Abund_Clean_Pasture("GRPC",500)%>%
   rename("Max_GRPC"="group_size")
 
 Max_VESP_Pasture=Max_Abund_Clean_Pasture("VESP",4)%>%
@@ -685,6 +689,9 @@ Max_VESP_Pasture=Max_Abund_Clean_Pasture("VESP",4)%>%
 
 Max_LASP_Pasture=Max_Abund_Clean_Pasture("LASP",4)%>%
   rename("Max_LASP"="group_size")
+
+Max_UPSA_Pasture=Max_Abund_Clean_Pasture("UPSA",4)%>%
+  rename("Max_UPSA"="group_size")
 
 Fac_List=c("BHCO","RWBL","COYE","FISP","BARS","EAKI","MODO","NOBO","LOSH","EABL","KILL","HOLA","TUVU","AMKE")%>%
   as_tibble()%>%
@@ -764,8 +771,6 @@ Max_BRTH_Pasture=Max_Abund_Clean_Pasture("BRTH",4)%>%
 Max_AMRO_Pasture=Max_Abund_Clean_Pasture("AMRO",4)%>%
   rename("Max_AMRO"="group_size")
 
-Pasture_Visit_Info=
-
 #savingmaximum abundance by pasture####
 Max_Abund_Final_Pasture=Patch_Visit_Info%>%
   ungroup()%>%
@@ -784,6 +789,7 @@ Max_Abund_Final_Pasture=Patch_Visit_Info%>%
   left_join(Max_GRPC_Pasture,          by="past_year")%>%
   left_join(Max_VESP_Pasture,          by="past_year")%>%
   left_join(Max_LASP_Pasture,          by="past_year")%>%
+  left_join(Max_UPSA_Pasture,          by="past_year")%>%
   
   left_join(Max_BHCO_Pasture,          by="past_year")%>%
   left_join(Max_RWBL_Pasture,          by="past_year")%>%
@@ -809,7 +815,7 @@ Max_Abund_Final_Pasture=Patch_Visit_Info%>%
   left_join(Max_NOMO_Pasture,          by="past_year")%>%
   mutate(across(Max_BOBO:Max_NOMO, ~replace_na(.x, 0)))%>%
   filter(!year=="NA")%>%
-  filter(year>2021)%>%
+  filter(year>2007)%>%
   pivot_longer(cols=starts_with("Max"),
                names_to="Species",
                values_to="Max_Abund",
@@ -823,7 +829,7 @@ Max_Abund_Final_Pasture=Patch_Visit_Info%>%
   left_join(Obl_Fac_List,by="Species")%>%
   select(year,Species,KLN, PYN, LTR, PYS, PYW, "235",RCH2014,RIS,RIN,GIL,BSH,KLT,RNR,Obl_Fac)
 
-write.csv(Max_Abund_Final_Pasture, "Max_Abund_Final_Pasture_DNR.csv")
+write.csv(Max_Abund_Final_Pasture, "Max_Abund_Final_Pasture_DNR_allyears.csv")
 
 Patch_Info=Patch_Visit_Info%>%
   group_by(pasture_id,patch_id,year)%>%
